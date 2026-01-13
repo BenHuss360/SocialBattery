@@ -1,26 +1,76 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf9f7;
+  --foreground: #2d2d2d;
+  --muted: #6b6b6b;
+  --card: #ffffff;
+  --border: #e5e5e5;
+
+  /* Battery colors - soft palette */
+  --battery-empty: #e8a4a4;
+  --battery-low: #e8c4a4;
+  --battery-half: #e8dca4;
+  --battery-high: #c4dca4;
+  --battery-full: #a4dcb4;
+
+  /* Accent */
+  --accent: #7c9a92;
+  --accent-hover: #6b8880;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #1a1a2e;
+    --foreground: #e8e8e8;
+    --muted: #a0a0a0;
+    --card: #252542;
+    --border: #3a3a5a;
+
+    /* Slightly more saturated for dark mode */
+    --battery-empty: #d98e8e;
+    --battery-low: #d9b38e;
+    --battery-half: #d9cb8e;
+    --battery-high: #b3cb8e;
+    --battery-full: #8ecb9e;
+
+    --accent: #8fb5ab;
+    --accent-hover: #a0c5bb;
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-muted: var(--muted);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-battery-empty: var(--battery-empty);
+  --color-battery-low: var(--battery-low);
+  --color-battery-half: var(--battery-half);
+  --color-battery-high: var(--battery-high);
+  --color-battery-full: var(--battery-full);
+  --font-sans: var(--font-nunito);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-nunito), system-ui, sans-serif;
+}
+
+/* Custom scrollbar for dark mode */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--background);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+  }
 }
