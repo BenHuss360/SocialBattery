@@ -74,3 +74,25 @@ body {
     border-radius: 4px;
   }
 }
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Battery segment focus styles */
+svg g[role="radio"]:focus {
+  outline: none;
+}
+svg g[role="radio"]:focus rect:first-of-type {
+  stroke: var(--accent);
+  stroke-width: 3;
+}

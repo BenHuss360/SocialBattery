@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { Battery } from "@/components/Battery";
+import { Toast } from "@/components/Toast";
 import { signOut } from "next-auth/react";
 import { STATUS_PRESETS } from "@/lib/constants";
 
@@ -39,6 +40,7 @@ export function DashboardClient({
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Randomize preset order on mount
   const shuffledPresets = useMemo(() => shuffleArray(STATUS_PRESETS), []);
@@ -52,15 +54,20 @@ export function DashboardClient({
       statusPreset?: string | null;
     }) => {
       setIsSaving(true);
+      setError(null);
       try {
-        await fetch("/api/battery", {
+        const res = await fetch("/api/battery", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updates),
         });
+        if (!res.ok) {
+          throw new Error("Failed to save changes");
+        }
         setLastSaved(new Date());
-      } catch (error) {
-        console.error("Failed to save:", error);
+      } catch (err) {
+        console.error("Failed to save:", err);
+        setError("Failed to save. Please try again.");
       } finally {
         setIsSaving(false);
       }
@@ -151,10 +158,10 @@ export function DashboardClient({
               <button
                 key={preset.value}
                 onClick={() => handlePresetSelect(preset.value)}
-                className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                className={`px-4 py-2.5 rounded-full text-sm transition-colors ${
                   statusPreset === preset.value && !useCustom
                     ? "bg-accent text-white"
-                    : "bg-background border border-border hover:border-accent"
+                    : "bg-background border border-border hover:border-accent active:scale-95"
                 }`}
               >
                 {preset.label}
@@ -233,7 +240,25 @@ export function DashboardClient({
         {/* Save indicator */}
         <div className="text-center text-sm text-muted">
           {isSaving ? (
-            "Saving..."
+            <span className="flex items-center justify-center gap-2">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+              Saving...
+            </span>
           ) : lastSaved ? (
             `Saved ${lastSaved.toLocaleTimeString()}`
           ) : (
@@ -241,6 +266,15 @@ export function DashboardClient({
           )}
         </div>
       </div>
+
+      {/* Error toast */}
+      {error && (
+        <Toast
+          message={error}
+          type="error"
+          onClose={() => setError(null)}
+        />
+      )}
     </main>
   );
 }

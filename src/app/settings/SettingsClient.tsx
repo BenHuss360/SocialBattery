@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useTheme } from "@/components/ThemeProvider";
+import { Toast } from "@/components/Toast";
 
 interface SettingsClientProps {
   initialVisibility: "public" | "unlisted";
@@ -16,6 +17,7 @@ export function SettingsClient({
   const [visibility, setVisibility] = useState(initialVisibility);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
 
   const saveSettings = useCallback(
@@ -24,15 +26,20 @@ export function SettingsClient({
       themePreference?: string;
     }) => {
       setIsSaving(true);
+      setError(null);
       try {
-        await fetch("/api/settings", {
+        const res = await fetch("/api/settings", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updates),
         });
+        if (!res.ok) {
+          throw new Error("Failed to save settings");
+        }
         setLastSaved(new Date());
-      } catch (error) {
-        console.error("Failed to save:", error);
+      } catch (err) {
+        console.error("Failed to save:", err);
+        setError("Failed to save. Please try again.");
       } finally {
         setIsSaving(false);
       }
@@ -67,14 +74,14 @@ export function SettingsClient({
         {/* Visibility Section */}
         <div className="bg-card rounded-xl border border-border p-6 mb-6">
           <h2 className="font-semibold mb-4">Profile Visibility</h2>
-          <div className="space-y-3">
-            <label className="flex items-start gap-3 cursor-pointer">
+          <div className="space-y-2">
+            <label className="flex items-center gap-3 cursor-pointer p-3 -mx-3 rounded-lg hover:bg-background transition-colors">
               <input
                 type="radio"
                 name="visibility"
                 checked={visibility === "public"}
                 onChange={() => handleVisibilityChange("public")}
-                className="mt-1 accent-accent"
+                className="w-5 h-5 accent-accent"
               />
               <div>
                 <div className="font-medium">Public</div>
@@ -83,13 +90,13 @@ export function SettingsClient({
                 </div>
               </div>
             </label>
-            <label className="flex items-start gap-3 cursor-pointer">
+            <label className="flex items-center gap-3 cursor-pointer p-3 -mx-3 rounded-lg hover:bg-background transition-colors">
               <input
                 type="radio"
                 name="visibility"
                 checked={visibility === "unlisted"}
                 onChange={() => handleVisibilityChange("unlisted")}
-                className="mt-1 accent-accent"
+                className="w-5 h-5 accent-accent"
               />
               <div>
                 <div className="font-medium">Unlisted</div>
@@ -109,10 +116,10 @@ export function SettingsClient({
               <button
                 key={option}
                 onClick={() => handleThemeChange(option)}
-                className={`flex-1 py-2 px-3 rounded-lg text-sm capitalize transition-colors ${
+                className={`flex-1 py-3 px-4 rounded-lg text-sm capitalize transition-colors ${
                   theme === option
                     ? "bg-accent text-white"
-                    : "bg-background border border-border hover:border-accent"
+                    : "bg-background border border-border hover:border-accent active:scale-95"
                 }`}
               >
                 {option}
@@ -124,7 +131,25 @@ export function SettingsClient({
         {/* Save indicator */}
         <div className="text-center text-sm text-muted">
           {isSaving ? (
-            "Saving..."
+            <span className="flex items-center justify-center gap-2">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+              Saving...
+            </span>
           ) : lastSaved ? (
             `Saved ${lastSaved.toLocaleTimeString()}`
           ) : (
@@ -132,6 +157,15 @@ export function SettingsClient({
           )}
         </div>
       </div>
+
+      {/* Error toast */}
+      {error && (
+        <Toast
+          message={error}
+          type="error"
+          onClose={() => setError(null)}
+        />
+      )}
     </main>
   );
 }

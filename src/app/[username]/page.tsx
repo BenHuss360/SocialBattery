@@ -5,6 +5,7 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { Battery } from "@/components/Battery";
 import { STATUS_PRESETS_MAP } from "@/lib/constants";
+import { ProfileActions } from "./ProfileClient";
 
 interface ProfilePageProps {
   params: Promise<{ username: string }>;
@@ -116,12 +117,15 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         {/* Username */}
         <h1 className="text-xl font-bold mb-6">@{displayUser.username}</h1>
 
+        {/* Stale warning banner */}
+        {freshness.state === "stale" && (
+          <div className="mb-4 px-4 py-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-lg text-sm">
+            This status may be outdated
+          </div>
+        )}
+
         {/* Battery */}
-        <div
-          className={`flex justify-center mb-4 ${
-            freshness.state === "stale" ? "opacity-60" : ""
-          } ${freshness.state === "aging" ? "opacity-80" : ""}`}
-        >
+        <div className="flex justify-center mb-4">
           <Battery level={displayUser.batteryLevel} size="lg" />
         </div>
 
@@ -132,7 +136,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
         {/* Freshness indicator */}
         <div
-          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm ${
             freshness.state === "fresh"
               ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
               : freshness.state === "aging"
@@ -150,18 +154,10 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             }`}
           />
           Updated {freshness.label}
-          {freshness.state === "stale" && " (may be outdated)"}
         </div>
 
-        {/* CTA */}
-        <div className="mt-12">
-          <a
-            href="/"
-            className="inline-block px-6 py-3 bg-accent hover:bg-accent-hover text-white font-medium rounded-lg transition-colors"
-          >
-            Get your own battery
-          </a>
-        </div>
+        {/* Share and CTA */}
+        <ProfileActions username={displayUser.username!} />
       </div>
     </main>
   );
