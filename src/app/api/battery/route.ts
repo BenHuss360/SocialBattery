@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { STATUS_PRESETS } from "@/lib/constants";
 
 export async function PATCH(request: NextRequest) {
   const session = await auth();
@@ -29,15 +30,8 @@ export async function PATCH(request: NextRequest) {
   }
 
   // Validate status preset
-  const validPresets = [
-    "recharging",
-    "need_space",
-    "open_to_plans",
-    "text_only",
-    "down_to_hang",
-    null,
-  ];
-  if (statusPreset !== undefined && !validPresets.includes(statusPreset)) {
+  const validPresets = STATUS_PRESETS.map((p) => p.value);
+  if (statusPreset !== undefined && statusPreset !== null && !validPresets.includes(statusPreset)) {
     return NextResponse.json({ error: "Invalid status preset" }, { status: 400 });
   }
 

@@ -3,16 +3,9 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { STATUS_PRESETS_MAP } from "@/lib/constants";
 
 export const runtime = "edge";
-
-const STATUS_PRESETS: Record<string, string> = {
-  recharging: "Recharging",
-  need_space: "Need space",
-  open_to_plans: "Open to plans",
-  text_only: "Text only please",
-  down_to_hang: "Down to hang",
-};
 
 const LEVEL_COLORS = [
   "#e8a4a4", // Empty
@@ -41,15 +34,25 @@ export async function GET(
   }
 
   const status =
-    user.statusText || (user.statusPreset ? STATUS_PRESETS[user.statusPreset] : null);
+    user.statusText || (user.statusPreset ? STATUS_PRESETS_MAP[user.statusPreset] : null);
   const color = LEVEL_COLORS[user.batteryLevel - 1];
   const levelLabel = LEVEL_LABELS[user.batteryLevel - 1];
+
+  // Format current timestamp
+  const now = new Date();
+  const timestamp = now.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  }) + ", " + now.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).toLowerCase();
 
   // Dimensions based on format
   const isStory = format === "story";
   const width = isStory ? 540 : 540;
   const height = isStory ? 960 : 540;
-  const batteryScale = isStory ? 1.2 : 1;
 
   const response = new ImageResponse(
     (
@@ -66,90 +69,94 @@ export async function GET(
           padding: 40,
         }}
       >
-        {/* Battery SVG */}
+        {/* Battery using divs */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             marginBottom: 24,
-            transform: `scale(${batteryScale})`,
           }}
         >
-          <svg width="100" height="160" viewBox="0 0 100 160">
-            {/* Battery cap */}
-            <rect x="40" y="0" width="20" height="8" rx="3" fill="#e5e5e5" />
-            {/* Battery body */}
-            <rect
-              x="4"
-              y="10"
-              width="92"
-              height="146"
-              rx="8"
-              fill="white"
-              stroke="#e5e5e5"
-              strokeWidth="2"
+          {/* Battery cap */}
+          <div
+            style={{
+              width: 30,
+              height: 12,
+              backgroundColor: "#e5e5e5",
+              borderRadius: 4,
+              marginBottom: 4,
+            }}
+          />
+          {/* Battery body */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+              padding: 8,
+              backgroundColor: "white",
+              border: "3px solid #e5e5e5",
+              borderRadius: 12,
+            }}
+          >
+            {/* Segment 5 (top) */}
+            <div
+              style={{
+                width: 80,
+                height: 28,
+                backgroundColor: user.batteryLevel >= 5 ? color : "#e5e5e5",
+                opacity: user.batteryLevel >= 5 ? 1 : 0.3,
+                borderRadius: 6,
+              }}
             />
-            {/* Segments */}
-            {[0, 1, 2, 3, 4].map((i) => {
-              const segmentIndex = 4 - i;
-              const isFilled = user.batteryLevel >= 5 - i;
-              const y = 14 + segmentIndex * 27;
-              return (
-                <rect
-                  key={i}
-                  x="10"
-                  y={y}
-                  width="80"
-                  height="23"
-                  rx="4"
-                  fill={isFilled ? color : "#e5e5e5"}
-                  opacity={isFilled ? 1 : 0.2}
-                />
-              );
-            })}
-            {/* Face - eyes */}
-            <ellipse
-              cx="38"
-              cy="85"
-              rx="6"
-              ry={user.batteryLevel <= 2 ? 2 : user.batteryLevel === 3 ? 4 : 5}
-              fill="#2d2d2d"
-              opacity="0.7"
+            {/* Segment 4 */}
+            <div
+              style={{
+                width: 80,
+                height: 28,
+                backgroundColor: user.batteryLevel >= 4 ? color : "#e5e5e5",
+                opacity: user.batteryLevel >= 4 ? 1 : 0.3,
+                borderRadius: 6,
+              }}
             />
-            <ellipse
-              cx="62"
-              cy="85"
-              rx="6"
-              ry={user.batteryLevel <= 2 ? 2 : user.batteryLevel === 3 ? 4 : 5}
-              fill="#2d2d2d"
-              opacity="0.7"
+            {/* Segment 3 */}
+            <div
+              style={{
+                width: 80,
+                height: 28,
+                backgroundColor: user.batteryLevel >= 3 ? color : "#e5e5e5",
+                opacity: user.batteryLevel >= 3 ? 1 : 0.3,
+                borderRadius: 6,
+              }}
             />
-            {/* Mouth */}
-            <path
-              d={`M 40 100 Q 50 ${
-                user.batteryLevel === 1
-                  ? 95
-                  : user.batteryLevel === 2
-                  ? 98
-                  : user.batteryLevel === 3
-                  ? 100
-                  : user.batteryLevel === 4
-                  ? 105
-                  : 108
-              } 60 100`}
-              fill="none"
-              stroke="#2d2d2d"
-              strokeWidth="2"
-              strokeLinecap="round"
-              opacity="0.7"
+            {/* Segment 2 */}
+            <div
+              style={{
+                width: 80,
+                height: 28,
+                backgroundColor: user.batteryLevel >= 2 ? color : "#e5e5e5",
+                opacity: user.batteryLevel >= 2 ? 1 : 0.3,
+                borderRadius: 6,
+              }}
             />
-          </svg>
+            {/* Segment 1 (bottom) */}
+            <div
+              style={{
+                width: 80,
+                height: 28,
+                backgroundColor: user.batteryLevel >= 1 ? color : "#e5e5e5",
+                opacity: user.batteryLevel >= 1 ? 1 : 0.3,
+                borderRadius: 6,
+              }}
+            />
+          </div>
         </div>
 
         {/* Level label */}
         <div
           style={{
+            display: "flex",
             fontSize: 28,
             fontWeight: 700,
             color: "#2d2d2d",
@@ -163,26 +170,45 @@ export async function GET(
         {status && (
           <div
             style={{
+              display: "flex",
               fontSize: 18,
               color: "#2d2d2d",
               marginBottom: 16,
               textAlign: "center",
-              maxWidth: "80%",
             }}
           >
             {status}
           </div>
         )}
 
-        {/* URL watermark */}
+        {/* URL watermark and timestamp */}
         <div
           style={{
-            fontSize: 14,
-            color: "#6b6b6b",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
             marginTop: "auto",
+            gap: 4,
           }}
         >
-          socialbattery.app/{user.username}
+          <div
+            style={{
+              display: "flex",
+              fontSize: 14,
+              color: "#6b6b6b",
+            }}
+          >
+            socialbattery.app/{user.username}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 12,
+              color: "#999999",
+            }}
+          >
+            {timestamp}
+          </div>
         </div>
       </div>
     ),

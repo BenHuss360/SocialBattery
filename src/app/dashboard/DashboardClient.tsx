@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Battery } from "@/components/Battery";
 import { signOut } from "next-auth/react";
+import { STATUS_PRESETS } from "@/lib/constants";
 
-const STATUS_PRESETS = [
-  { value: "recharging", label: "Recharging" },
-  { value: "need_space", label: "Need space" },
-  { value: "open_to_plans", label: "Open to plans" },
-  { value: "text_only", label: "Text only please" },
-  { value: "down_to_hang", label: "Down to hang" },
-] as const;
+function shuffleArray<T>(array: readonly T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
 interface DashboardClientProps {
   initialBatteryLevel: number;
@@ -36,6 +38,9 @@ export function DashboardClient({
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Randomize preset order on mount
+  const shuffledPresets = useMemo(() => shuffleArray(STATUS_PRESETS), []);
 
   const profileUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/${username}`;
 
@@ -133,7 +138,7 @@ export function DashboardClient({
 
           {/* Preset buttons */}
           <div className="flex flex-wrap gap-2 mb-4">
-            {STATUS_PRESETS.map((preset) => (
+            {shuffledPresets.map((preset) => (
               <button
                 key={preset.value}
                 onClick={() => handlePresetSelect(preset.value)}

@@ -4,14 +4,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { Battery } from "@/components/Battery";
-
-const STATUS_PRESETS: Record<string, string> = {
-  recharging: "Recharging",
-  need_space: "Need space",
-  open_to_plans: "Open to plans",
-  text_only: "Text only please",
-  down_to_hang: "Down to hang",
-};
+import { STATUS_PRESETS_MAP } from "@/lib/constants";
 
 interface ProfilePageProps {
   params: Promise<{ username: string }>;
@@ -33,7 +26,7 @@ export async function generateMetadata({
     return { title: "User not found" };
   }
 
-  const status = user.statusText || (user.statusPreset ? STATUS_PRESETS[user.statusPreset] : null);
+  const status = user.statusText || (user.statusPreset ? STATUS_PRESETS_MAP[user.statusPreset] : null);
   const levelLabels = ["Empty", "Low", "Half", "High", "Full"];
   const levelLabel = levelLabels[user.batteryLevel - 1];
 
@@ -114,7 +107,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   const status =
     displayUser.statusText ||
-    (displayUser.statusPreset ? STATUS_PRESETS[displayUser.statusPreset] : null);
+    (displayUser.statusPreset ? STATUS_PRESETS_MAP[displayUser.statusPreset] : null);
   const freshness = getFreshnessState(displayUser.updatedAt);
 
   return (

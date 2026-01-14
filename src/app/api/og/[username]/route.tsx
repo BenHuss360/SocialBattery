@@ -3,16 +3,9 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { STATUS_PRESETS_MAP } from "@/lib/constants";
 
 export const runtime = "edge";
-
-const STATUS_PRESETS: Record<string, string> = {
-  recharging: "Recharging",
-  need_space: "Need space",
-  open_to_plans: "Open to plans",
-  text_only: "Text only please",
-  down_to_hang: "Down to hang",
-};
 
 const LEVEL_COLORS = [
   "#e8a4a4", // Empty
@@ -39,7 +32,7 @@ export async function GET(
   }
 
   const status =
-    user.statusText || (user.statusPreset ? STATUS_PRESETS[user.statusPreset] : null);
+    user.statusText || (user.statusPreset ? STATUS_PRESETS_MAP[user.statusPreset] : null);
   const color = LEVEL_COLORS[user.batteryLevel - 1];
   const levelLabel = LEVEL_LABELS[user.batteryLevel - 1];
 

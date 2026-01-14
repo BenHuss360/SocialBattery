@@ -7,7 +7,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db),
   providers: [
     Resend({
-      from: "Social Battery <noreply@socialbattery.app>",
+      from: "Social Battery <noreply@fileseal.uk>",
     }),
   ],
   pages: {

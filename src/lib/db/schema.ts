@@ -13,13 +13,7 @@ import type { AdapterAccountType } from "next-auth/adapters";
 // App-specific enums
 export const visibilityEnum = pgEnum("visibility", ["public", "unlisted"]);
 export const themeEnum = pgEnum("theme_preference", ["system", "light", "dark"]);
-export const statusPresetEnum = pgEnum("status_preset", [
-  "recharging",
-  "need_space",
-  "open_to_plans",
-  "text_only",
-  "down_to_hang",
-]);
+// Status presets stored as varchar for flexibility
 
 // Users table (NextAuth compatible + app fields)
 export const users = pgTable("user", {
@@ -34,7 +28,7 @@ export const users = pgTable("user", {
   username: varchar("username", { length: 30 }).unique(),
   batteryLevel: integer("battery_level").default(3).notNull(),
   statusText: varchar("status_text", { length: 30 }),
-  statusPreset: statusPresetEnum("status_preset"),
+  statusPreset: varchar("status_preset", { length: 50 }),
   visibility: visibilityEnum("visibility").default("public").notNull(),
   themePreference: themeEnum("theme_preference").default("system").notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
