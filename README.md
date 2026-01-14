@@ -13,6 +13,7 @@ A web app that lets users set and share their "social battery" level - a visual 
 - **Dynamic OG Images** - Auto-generated previews when sharing links
 - **Dark Mode** - System preference detection + manual toggle
 - **Settings** - Control profile visibility (public/unlisted) and theme
+- **Accessible** - Keyboard navigation, ARIA labels, screen reader support
 
 ## Tech Stack
 
@@ -21,6 +22,14 @@ A web app that lets users set and share their "social battery" level - a visual 
 - **Database:** Neon Postgres with Drizzle ORM
 - **Images:** Vercel OG (Satori)
 - **Styling:** Tailwind CSS v4
+
+## Security
+
+- **Rate Limiting** - All API endpoints are rate-limited to prevent abuse
+- **Security Headers** - CSP, HSTS, X-Frame-Options, and more via next.config.ts
+- **Input Validation** - All user inputs validated and sanitized
+- **Visibility Enforcement** - Unlisted profiles hidden from OG/sticker generation
+- **Parameterized Queries** - Drizzle ORM prevents SQL injection
 
 ## Getting Started
 
@@ -57,9 +66,12 @@ Open [http://localhost:3000](http://localhost:3000)
 src/
 ├── app/
 │   ├── page.tsx                    # Homepage with interactive demo
+│   ├── not-found.tsx               # Custom 404 page
 │   ├── dashboard/                  # Battery controls, sharing
 │   ├── settings/                   # Visibility, theme controls
-│   ├── [username]/page.tsx         # Public profile (SSR)
+│   ├── [username]/
+│   │   ├── page.tsx                # Public profile (SSR)
+│   │   └── ProfileClient.tsx       # Share button, actions
 │   └── api/
 │       ├── battery/                # Update battery level/status
 │       ├── settings/               # Update visibility/theme
@@ -67,23 +79,25 @@ src/
 │       └── sticker/[username]/     # Downloadable stickers
 ├── components/
 │   ├── Battery.tsx                 # Battery component with faces
+│   ├── Toast.tsx                   # Notification component
 │   └── ThemeProvider.tsx           # Dark mode context
 └── lib/
     ├── auth.ts                     # NextAuth configuration
     ├── constants.ts                # 30 status presets
+    ├── rate-limit.ts               # API rate limiting
     └── db/                         # Drizzle schema and client
 ```
 
 ## API Routes
 
-| Route | Method | Description |
-|-------|--------|-------------|
-| `/api/battery` | PATCH | Update battery level and status |
-| `/api/settings` | PATCH | Update visibility and theme |
-| `/api/og/[username]` | GET | Generate OG image |
-| `/api/sticker/[username]` | GET | Generate sticker image |
-| `/api/username/check` | POST | Check username availability |
-| `/api/username/claim` | POST | Claim a username |
+| Route | Method | Rate Limit | Description |
+|-------|--------|------------|-------------|
+| `/api/battery` | PATCH | 30/min | Update battery level and status |
+| `/api/settings` | PATCH | 10/min | Update visibility and theme |
+| `/api/og/[username]` | GET | 60/min | Generate OG image |
+| `/api/sticker/[username]` | GET | 30/min | Generate sticker image |
+| `/api/username/check` | GET | 30/min | Check username availability |
+| `/api/username/claim` | POST | 5/hour | Claim a username |
 
 ## Deployment
 
