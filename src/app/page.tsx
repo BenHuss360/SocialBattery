@@ -1,14 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Battery } from "@/components/Battery";
 import { signIn } from "next-auth/react";
+import { STATUS_PRESETS } from "@/lib/constants";
+
+// Show a subset of presets for the demo
+const DEMO_PRESETS = [
+  "recharging",
+  "need_space",
+  "open_to_plans",
+  "down_to_hang",
+  "just_vibing",
+  "feeling_social",
+];
 
 export default function HomePage() {
   const [demoLevel, setDemoLevel] = useState(3);
+  const [demoStatus, setDemoStatus] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+
+  const demoPresets = useMemo(
+    () => STATUS_PRESETS.filter((p) => DEMO_PRESETS.includes(p.value)),
+    []
+  );
+
+  const currentStatusLabel = demoStatus
+    ? STATUS_PRESETS.find((p) => p.value === demoStatus)?.label
+    : null;
 
   const handleGetStarted = () => {
     setShowAuth(true);
@@ -36,7 +57,7 @@ export default function HomePage() {
       <section className="min-h-screen flex flex-col items-center justify-center p-6">
         <div className="max-w-md w-full text-center">
           {/* Interactive Demo Battery */}
-          <div className="mb-8">
+          <div className="mb-4">
             <Battery
               level={demoLevel}
               onChange={setDemoLevel}
@@ -44,6 +65,37 @@ export default function HomePage() {
               size="lg"
             />
           </div>
+
+          {/* Demo Status Display */}
+          {currentStatusLabel && (
+            <p className="text-lg text-foreground mb-4">
+              &ldquo;{currentStatusLabel}&rdquo;
+            </p>
+          )}
+
+          {/* Demo Status Presets */}
+          <div className="flex flex-wrap justify-center gap-2 mb-6">
+            {demoPresets.map((preset) => (
+              <button
+                key={preset.value}
+                onClick={() =>
+                  setDemoStatus(demoStatus === preset.value ? null : preset.value)
+                }
+                className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                  demoStatus === preset.value
+                    ? "bg-accent text-white"
+                    : "bg-card border border-border hover:border-accent"
+                }`}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Preview URL */}
+          <p className="text-sm text-muted mb-6">
+            socialbattery.app/<span className="text-foreground">yourname</span>
+          </p>
 
           <h1 className="text-3xl font-bold mb-4">Social Battery</h1>
           <p className="text-muted text-lg mb-8">
@@ -60,7 +112,7 @@ export default function HomePage() {
                 Claim your battery
               </button>
               <p className="text-sm text-muted">
-                Try it above! Tap the battery segments to change the level.
+                Try it above! Tap the battery and status presets to see how it works.
               </p>
             </>
           ) : (

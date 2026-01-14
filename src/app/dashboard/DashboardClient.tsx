@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
+import Link from "next/link";
 import { Battery } from "@/components/Battery";
 import { signOut } from "next-auth/react";
 import { STATUS_PRESETS } from "@/lib/constants";
@@ -114,12 +115,20 @@ export function DashboardClient({
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-xl font-bold">Your Battery</h1>
-          <button
-            onClick={() => signOut({ callbackUrl: "/" })}
-            className="text-sm text-muted hover:text-foreground transition-colors"
-          >
-            Sign out
-          </button>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/settings"
+              className="text-sm text-muted hover:text-foreground transition-colors"
+            >
+              Settings
+            </Link>
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="text-sm text-muted hover:text-foreground transition-colors"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
 
         {/* Battery Display */}
@@ -203,13 +212,22 @@ export function DashboardClient({
             </button>
           </div>
 
-          <a
-            href={`/api/sticker/${username}?format=square`}
-            download={`${username}-battery.png`}
-            className="block w-full py-2 text-center border border-border rounded-lg text-sm hover:bg-background transition-colors"
-          >
-            Download sticker (square)
-          </a>
+          <div className="flex gap-2">
+            <a
+              href={`/api/sticker/${username}?format=square`}
+              download={`${username}-battery-square.png`}
+              className="flex-1 py-2 text-center border border-border rounded-lg text-sm hover:bg-background transition-colors"
+            >
+              Download (square)
+            </a>
+            <a
+              href={`/api/sticker/${username}?format=story`}
+              download={`${username}-battery-story.png`}
+              className="flex-1 py-2 text-center border border-border rounded-lg text-sm hover:bg-background transition-colors"
+            >
+              Download (story)
+            </a>
+          </div>
         </div>
 
         {/* Save indicator */}
