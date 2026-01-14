@@ -4,12 +4,32 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { STATUS_PRESETS } from "@/lib/constants";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function PATCH(request: NextRequest) {
   const session = await auth();
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limit by user ID
+  const rateLimitResult = rateLimit(
+    `battery:${session.user.id}`,
+    RATE_LIMITS.battery
+  );
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(
+            Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+          ),
+        },
+      }
+    );
   }
 
   const body = await request.json();

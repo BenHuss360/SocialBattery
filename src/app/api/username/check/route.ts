@@ -2,8 +2,29 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { rateLimit, getClientIdentifier, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
+  // Rate limit by IP (public endpoint)
+  const clientId = getClientIdentifier(request);
+  const rateLimitResult = rateLimit(
+    `username-check:${clientId}`,
+    RATE_LIMITS.usernameCheck
+  );
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { available: false, error: "Too many requests" },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(
+            Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+          ),
+        },
+      }
+    );
+  }
+
   const searchParams = request.nextUrl.searchParams;
   const username = searchParams.get("username")?.toLowerCase();
 

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { STATUS_PRESETS_MAP } from "@/lib/constants";
+import { rateLimit, getClientIdentifier, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const runtime = "edge";
 
@@ -21,6 +22,13 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ username: string }> }
 ) {
+  // Rate limit by IP
+  const clientId = getClientIdentifier(request);
+  const rateLimitResult = rateLimit(`sticker:${clientId}`, RATE_LIMITS.sticker);
+  if (!rateLimitResult.success) {
+    return new Response("Too many requests", { status: 429 });
+  }
+
   const { username } = await params;
   const searchParams = request.nextUrl.searchParams;
   const format = searchParams.get("format") || "square";
@@ -29,7 +37,8 @@ export async function GET(
     where: eq(users.username, username.toLowerCase()),
   });
 
-  if (!user) {
+  // Return 404 for non-existent users or unlisted profiles
+  if (!user || user.visibility === "unlisted") {
     return new Response("User not found", { status: 404 });
   }
 
