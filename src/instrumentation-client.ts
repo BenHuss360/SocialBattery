@@ -6,10 +6,13 @@ Sentry.init({
   // Only enable in production
   enabled: process.env.NODE_ENV === "production",
 
-  // Capture 100% of errors in production
+  // Enable logging
+  enableLogs: true,
+
+  // Capture 100% of errors
   tracesSampleRate: 1.0,
 
-  // Capture 10% of sessions for performance monitoring
+  // Capture 10% of sessions for replay
   replaysSessionSampleRate: 0.1,
 
   // Capture 100% of sessions with errors
@@ -29,5 +32,10 @@ Sentry.init({
     "Load failed",
     // User cancelled
     "AbortError",
+  ],
+
+  integrations: [
+    // Send console.warn and console.error to Sentry
+    Sentry.consoleLoggingIntegration({ levels: ["warn", "error"] }),
   ],
 });

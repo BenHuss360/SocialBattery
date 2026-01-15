@@ -6,9 +6,17 @@ Sentry.init({
   // Only enable in production
   enabled: process.env.NODE_ENV === "production",
 
+  // Enable logging
+  enableLogs: true,
+
   // Capture 100% of errors
   tracesSampleRate: 1.0,
 
   // Don't send PII
   sendDefaultPii: false,
+
+  integrations: [
+    // Send console.warn and console.error to Sentry
+    Sentry.consoleLoggingIntegration({ levels: ["warn", "error"] }),
+  ],
 });
