@@ -58,10 +58,10 @@ export async function GET(
     hour12: true,
   }).toLowerCase();
 
-  // Dimensions based on format
+  // Dimensions based on format (story: 9:16 portrait, square: 1:1)
   const isStory = format === "story";
-  const width = isStory ? 540 : 540;
-  const height = isStory ? 960 : 540;
+  const width = isStory ? 540 : 800;
+  const height = isStory ? 960 : 800;
 
   const response = new ImageResponse(
     (
@@ -227,10 +227,14 @@ export async function GET(
     }
   );
 
-  // Set headers for download
+  // Set headers for download and caching
   response.headers.set(
     "Content-Disposition",
     `attachment; filename="${username}-battery-${format}.png"`
+  );
+  response.headers.set(
+    "Cache-Control",
+    "public, s-maxage=3600, stale-while-revalidate=7200"
   );
 
   return response;

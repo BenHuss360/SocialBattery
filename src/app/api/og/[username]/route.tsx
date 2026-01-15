@@ -45,7 +45,7 @@ export async function GET(
   const color = LEVEL_COLORS[user.batteryLevel - 1];
   const levelLabel = LEVEL_LABELS[user.batteryLevel - 1];
 
-  return new ImageResponse(
+  const response = new ImageResponse(
     (
       <div
         style={{
@@ -157,4 +157,12 @@ export async function GET(
       height: 630,
     }
   );
+
+  // Cache OG images for 1 hour
+  response.headers.set(
+    "Cache-Control",
+    "public, s-maxage=3600, stale-while-revalidate=7200"
+  );
+
+  return response;
 }

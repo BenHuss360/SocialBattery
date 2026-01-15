@@ -65,7 +65,13 @@ export async function GET(request: NextRequest) {
       .where(eq(users.username, username))
       .limit(1);
 
-    return NextResponse.json({ available: existing.length === 0 });
+    const response = NextResponse.json({ available: existing.length === 0 });
+    // Cache for 5 minutes - username availability doesn't change frequently
+    response.headers.set(
+      "Cache-Control",
+      "public, s-maxage=300, stale-while-revalidate=600"
+    );
+    return response;
   } catch {
     return NextResponse.json(
       { available: false, error: "Database error" },

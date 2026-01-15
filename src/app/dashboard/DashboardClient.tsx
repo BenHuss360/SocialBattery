@@ -152,11 +152,13 @@ export function DashboardClient({
           <h2 className="font-semibold mb-4">Status</h2>
 
           {/* Preset buttons */}
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label="Status presets">
             {shuffledPresets.map((preset) => (
               <button
                 key={preset.value}
                 onClick={() => handlePresetSelect(preset.value)}
+                aria-label={`Set status to: ${preset.label}`}
+                aria-pressed={statusPreset === preset.value && !useCustom}
                 className={`px-4 py-2.5 rounded-full text-sm transition-colors ${
                   statusPreset === preset.value && !useCustom
                     ? "bg-accent text-white"
