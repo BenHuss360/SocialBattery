@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Allow: /api/og/
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /onboarding
+Disallow: /login
+Disallow: /check-email
+Disallow: /api/
+
+Sitemap: https://socialbattery.app/sitemap.xml

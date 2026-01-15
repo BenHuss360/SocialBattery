@@ -40,31 +40,41 @@ export async function generateMetadata({
   const user = await getUser(username);
 
   if (!user) {
-    return { title: "User not found" };
+    return {
+      title: "User not found",
+      robots: { index: false, follow: false },
+    };
   }
 
   const status = user.statusText || (user.statusPreset ? STATUS_PRESETS_MAP[user.statusPreset] : null);
   const levelLabels = ["Empty", "Low", "Half", "High", "Full"];
   const levelLabel = levelLabels[user.batteryLevel - 1];
+  const description = status
+    ? `${levelLabel} - ${status}`
+    : `Social battery: ${levelLabel}`;
+
+  // Don't index unlisted profiles
+  const shouldIndex = user.visibility === "public";
 
   return {
     title: `${user.username}'s Social Battery`,
-    description: status
-      ? `${levelLabel} - ${status}`
-      : `Social battery: ${levelLabel}`,
+    description,
+    alternates: {
+      canonical: `/${user.username}`,
+    },
+    robots: shouldIndex
+      ? { index: true, follow: true }
+      : { index: false, follow: false },
     openGraph: {
       title: `${user.username}'s Social Battery`,
-      description: status
-        ? `${levelLabel} - ${status}`
-        : `Social battery: ${levelLabel}`,
+      description,
+      type: "profile",
       images: [`/api/og/${user.username}`],
     },
     twitter: {
       card: "summary_large_image",
       title: `${user.username}'s Social Battery`,
-      description: status
-        ? `${levelLabel} - ${status}`
-        : `Social battery: ${levelLabel}`,
+      description,
       images: [`/api/og/${user.username}`],
     },
   };
