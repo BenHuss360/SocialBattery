@@ -7,7 +7,7 @@ import { rateLimit, getClientIdentifier, RATE_LIMITS } from "@/lib/rate-limit";
 export async function GET(request: NextRequest) {
   // Rate limit by IP (public endpoint)
   const clientId = getClientIdentifier(request);
-  const rateLimitResult = rateLimit(
+  const rateLimitResult = await rateLimit(
     `username-check:${clientId}`,
     RATE_LIMITS.usernameCheck
   );

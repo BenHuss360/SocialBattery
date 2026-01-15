@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Rate limit by user ID - stricter limit for claiming usernames
-  const rateLimitResult = rateLimit(
+  const rateLimitResult = await rateLimit(
     `username-claim:${session.user.id}`,
     RATE_LIMITS.usernameClaim
   );

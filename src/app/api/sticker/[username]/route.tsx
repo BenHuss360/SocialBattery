@@ -24,7 +24,7 @@ export async function GET(
 ) {
   // Rate limit by IP
   const clientId = getClientIdentifier(request);
-  const rateLimitResult = rateLimit(`sticker:${clientId}`, RATE_LIMITS.sticker);
+  const rateLimitResult = await rateLimit(`sticker:${clientId}`, RATE_LIMITS.sticker);
   if (!rateLimitResult.success) {
     return new Response("Too many requests", { status: 429 });
   }

@@ -14,7 +14,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   // Rate limit by user ID
-  const rateLimitResult = rateLimit(
+  const rateLimitResult = await rateLimit(
     `battery:${session.user.id}`,
     RATE_LIMITS.battery
   );

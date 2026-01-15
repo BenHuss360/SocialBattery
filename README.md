@@ -26,7 +26,7 @@ A web app that lets users set and share their "social battery" level - a visual 
 
 ## Security
 
-- **Rate Limiting** - All API endpoints are rate-limited to prevent abuse
+- **Distributed Rate Limiting** - Vercel KV (Redis) for rate limiting across all serverless instances
 - **Security Headers** - CSP, HSTS, X-Frame-Options, and more via next.config.ts
 - **Input Validation** - All user inputs validated and sanitized
 - **Visibility Enforcement** - Unlisted profiles hidden from OG/sticker generation
@@ -138,13 +138,36 @@ src/
 
 ## Deployment
 
-Deploy to Vercel:
+### Deploy to Vercel
 
 ```bash
 vercel
 ```
 
-Set environment variables in the Vercel dashboard.
+### Set Up Vercel KV (Required for Production)
+
+Rate limiting requires Vercel KV for distributed state across serverless instances:
+
+1. Go to your project in the [Vercel Dashboard](https://vercel.com/dashboard)
+2. Navigate to **Storage** → **Create Database** → **KV**
+3. Name it (e.g., `social-battery-kv`) and create
+4. Connect it to your project
+
+Vercel automatically injects `KV_REST_API_URL` and `KV_REST_API_TOKEN` environment variables.
+
+**Note:** Without Vercel KV, the app falls back to in-memory rate limiting (fine for local development, but rate limits won't work correctly across serverless instances in production).
+
+### Environment Variables
+
+Set these in the Vercel dashboard:
+
+| Variable | Description |
+|----------|-------------|
+| `POSTGRES_URL` | Neon database connection string |
+| `AUTH_SECRET` | NextAuth secret (generate with `openssl rand -base64 32`) |
+| `AUTH_RESEND_KEY` | Resend API key |
+| `KV_REST_API_URL` | Auto-injected by Vercel KV |
+| `KV_REST_API_TOKEN` | Auto-injected by Vercel KV |
 
 ## License
 

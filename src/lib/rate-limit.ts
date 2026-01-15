@@ -1,34 +1,11 @@
 /**
- * Simple in-memory rate limiter for API routes.
+ * Distributed rate limiter using Vercel KV (Redis).
  *
- * Note: In serverless environments like Vercel, each function instance
- * has its own memory, so this provides protection within a single instance.
- * For production at scale, consider using Vercel KV or Upstash Redis.
+ * Uses Vercel KV in production for distributed rate limiting across
+ * all serverless instances. Falls back to in-memory for local development.
  */
 
-interface RateLimitEntry {
-  count: number;
-  resetTime: number;
-}
-
-// In-memory store for rate limiting
-const rateLimitStore = new Map<string, RateLimitEntry>();
-
-// Clean up old entries periodically (every 5 minutes)
-const CLEANUP_INTERVAL = 5 * 60 * 1000;
-let lastCleanup = Date.now();
-
-function cleanup() {
-  const now = Date.now();
-  if (now - lastCleanup < CLEANUP_INTERVAL) return;
-
-  lastCleanup = now;
-  for (const [key, entry] of rateLimitStore.entries()) {
-    if (now > entry.resetTime) {
-      rateLimitStore.delete(key);
-    }
-  }
-}
+import { kv } from "@vercel/kv";
 
 interface RateLimitConfig {
   /** Maximum number of requests allowed in the window */
@@ -43,19 +20,67 @@ interface RateLimitResult {
   reset: number;
 }
 
+// Check if Vercel KV is available (production)
+const isKvAvailable = !!(
+  process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+);
+
+// In-memory fallback for local development
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
 /**
- * Check if a request should be rate limited.
- *
- * @param identifier - Unique identifier for the client (e.g., IP address or user ID)
- * @param config - Rate limit configuration
- * @returns Result indicating if request is allowed
+ * Rate limit using Vercel KV (distributed across all instances).
  */
-export function rateLimit(
+async function rateLimitWithKv(
+  identifier: string,
+  config: RateLimitConfig
+): Promise<RateLimitResult> {
+  const key = `ratelimit:${identifier}`;
+  const now = Date.now();
+  const windowMs = config.windowSeconds * 1000;
+
+  // Use Redis MULTI for atomic operations
+  const current = await kv.get<{ count: number; resetTime: number }>(key);
+
+  if (!current || now > current.resetTime) {
+    // First request or window expired - create new entry
+    const newEntry = { count: 1, resetTime: now + windowMs };
+    await kv.set(key, newEntry, { px: windowMs }); // Auto-expire
+    return {
+      success: true,
+      remaining: config.limit - 1,
+      reset: newEntry.resetTime,
+    };
+  }
+
+  // Within current window
+  if (current.count >= config.limit) {
+    return {
+      success: false,
+      remaining: 0,
+      reset: current.resetTime,
+    };
+  }
+
+  // Increment counter
+  const updated = { ...current, count: current.count + 1 };
+  const ttl = current.resetTime - now;
+  await kv.set(key, updated, { px: ttl > 0 ? ttl : windowMs });
+
+  return {
+    success: true,
+    remaining: config.limit - updated.count,
+    reset: current.resetTime,
+  };
+}
+
+/**
+ * Rate limit using in-memory store (for local development).
+ */
+function rateLimitInMemory(
   identifier: string,
   config: RateLimitConfig
 ): RateLimitResult {
-  cleanup();
-
   const now = Date.now();
   const windowMs = config.windowSeconds * 1000;
   const key = identifier;
@@ -63,7 +88,6 @@ export function rateLimit(
   const entry = rateLimitStore.get(key);
 
   if (!entry || now > entry.resetTime) {
-    // First request or window expired - create new entry
     rateLimitStore.set(key, {
       count: 1,
       resetTime: now + windowMs,
@@ -75,7 +99,6 @@ export function rateLimit(
     };
   }
 
-  // Within current window
   if (entry.count >= config.limit) {
     return {
       success: false,
@@ -84,13 +107,39 @@ export function rateLimit(
     };
   }
 
-  // Increment counter
   entry.count++;
   return {
     success: true,
     remaining: config.limit - entry.count,
     reset: entry.resetTime,
   };
+}
+
+/**
+ * Check if a request should be rate limited.
+ *
+ * Uses Vercel KV in production for distributed rate limiting.
+ * Falls back to in-memory for local development.
+ *
+ * @param identifier - Unique identifier for the client (e.g., IP address or user ID)
+ * @param config - Rate limit configuration
+ * @returns Result indicating if request is allowed
+ */
+export async function rateLimit(
+  identifier: string,
+  config: RateLimitConfig
+): Promise<RateLimitResult> {
+  if (isKvAvailable) {
+    try {
+      return await rateLimitWithKv(identifier, config);
+    } catch (error) {
+      // If KV fails, fall back to in-memory (better than no rate limiting)
+      console.error("Vercel KV rate limit error, falling back to in-memory:", error);
+      return rateLimitInMemory(identifier, config);
+    }
+  }
+
+  return rateLimitInMemory(identifier, config);
 }
 
 /**
