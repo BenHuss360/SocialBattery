@@ -22,6 +22,7 @@ A web app that lets users set and share their "social battery" level - a visual 
 - **Database:** Neon Postgres with Drizzle ORM
 - **Images:** Vercel OG (Satori)
 - **Styling:** Tailwind CSS v4
+- **Testing:** Vitest + React Testing Library
 
 ## Security
 
@@ -30,6 +31,18 @@ A web app that lets users set and share their "social battery" level - a visual 
 - **Input Validation** - All user inputs validated and sanitized
 - **Visibility Enforcement** - Unlisted profiles hidden from OG/sticker generation
 - **Parameterized Queries** - Drizzle ORM prevents SQL injection
+
+## SEO & Performance
+
+- **Dynamic Sitemap** - Auto-generated sitemap.xml with public profiles
+- **Robots.txt** - Search engine crawl rules
+- **JSON-LD Structured Data** - Rich snippets for profiles
+- **Canonical URLs** - Prevent duplicate content issues
+- **API Caching** - Cache-Control headers for OG/sticker routes
+- **Database Indexes** - Optimized queries for visibility and timestamps
+- **Error Boundaries** - Graceful error handling with retry capability
+- **Environment Validation** - Startup checks for required config
+- **Health Check Endpoint** - `/api/health` for monitoring
 
 ## Getting Started
 
@@ -60,44 +73,68 @@ npm run dev      # Start dev server
 
 Open [http://localhost:3000](http://localhost:3000)
 
+### Testing
+
+```bash
+npm test              # Watch mode
+npm run test:run      # Single run
+npm run test:ui       # Browser UI
+npm run test:coverage # Coverage report
+```
+
 ## Project Structure
 
 ```
 src/
 ├── app/
 │   ├── page.tsx                    # Homepage with interactive demo
+│   ├── sitemap.ts                  # Dynamic sitemap generation
 │   ├── not-found.tsx               # Custom 404 page
-│   ├── dashboard/                  # Battery controls, sharing
-│   ├── settings/                   # Visibility, theme controls
+│   ├── dashboard/
+│   │   ├── page.tsx                # Battery controls, sharing
+│   │   └── error.tsx               # Error boundary
+│   ├── settings/
+│   │   ├── page.tsx                # Visibility, theme controls
+│   │   └── error.tsx               # Error boundary
 │   ├── [username]/
 │   │   ├── page.tsx                # Public profile (SSR)
-│   │   └── ProfileClient.tsx       # Share button, actions
+│   │   ├── ProfileClient.tsx       # Share button, actions
+│   │   └── error.tsx               # Error boundary
 │   └── api/
 │       ├── battery/                # Update battery level/status
 │       ├── settings/               # Update visibility/theme
+│       ├── health/                 # Health check endpoint
 │       ├── og/[username]/          # Dynamic OG images
 │       └── sticker/[username]/     # Downloadable stickers
 ├── components/
 │   ├── Battery.tsx                 # Battery component with faces
+│   ├── Battery.test.tsx            # Component tests
 │   ├── Toast.tsx                   # Notification component
 │   └── ThemeProvider.tsx           # Dark mode context
+├── test/
+│   ├── setup.ts                    # Test setup and mocks
+│   └── utils.tsx                   # Custom render utilities
 └── lib/
     ├── auth.ts                     # NextAuth configuration
     ├── constants.ts                # 30 status presets
+    ├── constants.test.ts           # Constants tests
+    ├── validation.test.ts          # Validation tests
+    ├── env.ts                      # Environment validation
     ├── rate-limit.ts               # API rate limiting
     └── db/                         # Drizzle schema and client
 ```
 
 ## API Routes
 
-| Route | Method | Rate Limit | Description |
-|-------|--------|------------|-------------|
-| `/api/battery` | PATCH | 30/min | Update battery level and status |
-| `/api/settings` | PATCH | 10/min | Update visibility and theme |
-| `/api/og/[username]` | GET | 60/min | Generate OG image |
-| `/api/sticker/[username]` | GET | 30/min | Generate sticker image |
-| `/api/username/check` | GET | 30/min | Check username availability |
-| `/api/username/claim` | POST | 5/hour | Claim a username |
+| Route | Method | Rate Limit | Cache | Description |
+|-------|--------|------------|-------|-------------|
+| `/api/battery` | PATCH | 30/min | - | Update battery level and status |
+| `/api/settings` | PATCH | 10/min | - | Update visibility and theme |
+| `/api/og/[username]` | GET | 60/min | 1hr | Generate OG image |
+| `/api/sticker/[username]` | GET | 30/min | 1hr | Generate sticker image |
+| `/api/username/check` | GET | 30/min | 5min | Check username availability |
+| `/api/username/claim` | POST | 5/hour | - | Claim a username |
+| `/api/health` | GET | - | - | Health check for monitoring |
 
 ## Deployment
 
