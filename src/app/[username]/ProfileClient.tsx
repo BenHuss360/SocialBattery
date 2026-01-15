@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 interface ProfileActionsProps {
   username: string;
@@ -58,12 +59,12 @@ export function ProfileActions({ username }: ProfileActionsProps) {
         {copied ? "Copied!" : "Share this profile"}
       </button>
 
-      <a
+      <Link
         href="/"
         className="inline-block px-6 py-3 bg-accent hover:bg-accent-hover text-white font-medium rounded-lg transition-colors"
       >
         Share your battery too
-      </a>
+      </Link>
     </div>
   );
 }
