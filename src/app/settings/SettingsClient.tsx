@@ -7,12 +7,10 @@ import { Toast } from "@/components/Toast";
 
 interface SettingsClientProps {
   initialVisibility: "public" | "unlisted";
-  initialThemePreference: "system" | "light" | "dark";
 }
 
 export function SettingsClient({
   initialVisibility,
-  initialThemePreference,
 }: SettingsClientProps) {
   const [visibility, setVisibility] = useState(initialVisibility);
   const [isSaving, setIsSaving] = useState(false);

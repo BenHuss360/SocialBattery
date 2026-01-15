@@ -36,7 +36,6 @@ export default async function SettingsPage() {
   return (
     <SettingsClient
       initialVisibility={user.visibility}
-      initialThemePreference={user.themePreference}
     />
   );
 }
