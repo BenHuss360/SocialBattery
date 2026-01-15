@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Nunito } from "next/font/google";
 import { Providers } from "@/components/Providers";
 import "./globals.css";
@@ -37,12 +37,6 @@ export const metadata: Metadata = {
       follow: true,
     },
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -68,6 +62,13 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Social Battery" }],
   creator: "Social Battery",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 // JSON-LD structured data for the website
