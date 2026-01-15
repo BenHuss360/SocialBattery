@@ -5,6 +5,9 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { SettingsClient } from "./SettingsClient";
 
+// Force dynamic rendering - user settings must always be fresh
+export const dynamic = "force-dynamic";
+
 export default async function SettingsPage() {
   const session = await auth();
 

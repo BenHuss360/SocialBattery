@@ -5,6 +5,9 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { DashboardClient } from "./DashboardClient";
 
+// Force dynamic rendering - user data must always be fresh
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const session = await auth();
 

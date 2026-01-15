@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Battery } from "@/components/Battery";
 
 function LoginForm() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -35,7 +36,7 @@ function LoginForm() {
         setError("Something went wrong. Please try again.");
       } else {
         // Redirect to check-email page with email param
-        window.location.href = `/check-email?email=${encodeURIComponent(email)}`;
+        router.push(`/check-email?email=${encodeURIComponent(email)}`);
       }
     } catch {
       setError("Something went wrong. Please try again.");

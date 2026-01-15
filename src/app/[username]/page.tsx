@@ -2,10 +2,13 @@ import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { Battery } from "@/components/Battery";
 import { STATUS_PRESETS_MAP } from "@/lib/constants";
 import { ProfileActions } from "./ProfileClient";
+
+// ISR: Revalidate profile pages every 60 seconds
+export const revalidate = 60;
 
 interface ProfilePageProps {
   params: Promise<{ username: string }>;
@@ -15,6 +18,19 @@ async function getUser(username: string) {
   return db.query.users.findFirst({
     where: eq(users.username, username.toLowerCase()),
   });
+}
+
+// Pre-generate static pages for recent users (ISR will handle the rest)
+export async function generateStaticParams() {
+  const recentUsers = await db.query.users.findMany({
+    orderBy: [desc(users.updatedAt)],
+    limit: 100,
+    columns: { username: true },
+  });
+
+  return recentUsers
+    .filter((user) => user.username)
+    .map((user) => ({ username: user.username! }));
 }
 
 export async function generateMetadata({
@@ -89,33 +105,24 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const { username } = await params;
   const user = await getUser(username);
 
-  if (!user || user.visibility === "unlisted") {
-    // For unlisted, we still show the profile if accessed directly
-    // but don't include in any listings. Here we just check if user exists.
-    const actualUser = await db.query.users.findFirst({
-      where: eq(users.username, username.toLowerCase()),
-    });
-    if (!actualUser) {
-      notFound();
-    }
-    // Continue with actualUser for unlisted profiles
-  }
-
-  const displayUser = user || (await getUser(username));
-  if (!displayUser) {
+  // If user doesn't exist, return 404
+  if (!user) {
     notFound();
   }
 
+  // Unlisted profiles are still accessible via direct URL,
+  // they just won't appear in public listings
+
   const status =
-    displayUser.statusText ||
-    (displayUser.statusPreset ? STATUS_PRESETS_MAP[displayUser.statusPreset] : null);
-  const freshness = getFreshnessState(displayUser.updatedAt);
+    user.statusText ||
+    (user.statusPreset ? STATUS_PRESETS_MAP[user.statusPreset] : null);
+  const freshness = getFreshnessState(user.updatedAt);
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm text-center">
         {/* Username */}
-        <h1 className="text-xl font-bold mb-6">@{displayUser.username}</h1>
+        <h1 className="text-xl font-bold mb-6">@{user.username}</h1>
 
         {/* Stale warning banner */}
         {freshness.state === "stale" && (
@@ -126,7 +133,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
         {/* Battery */}
         <div className="flex justify-center mb-4">
-          <Battery level={displayUser.batteryLevel} size="lg" />
+          <Battery level={user.batteryLevel} size="lg" />
         </div>
 
         {/* Status */}
@@ -157,7 +164,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         </div>
 
         {/* Share and CTA */}
-        <ProfileActions username={displayUser.username!} />
+        <ProfileActions username={user.username!} />
       </div>
     </main>
   );

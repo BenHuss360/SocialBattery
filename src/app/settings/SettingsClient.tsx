@@ -37,8 +37,7 @@ export function SettingsClient({
           throw new Error("Failed to save settings");
         }
         setLastSaved(new Date());
-      } catch (err) {
-        console.error("Failed to save:", err);
+      } catch {
         setError("Failed to save. Please try again.");
       } finally {
         setIsSaving(false);

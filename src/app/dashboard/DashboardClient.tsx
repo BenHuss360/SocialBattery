@@ -65,8 +65,7 @@ export function DashboardClient({
           throw new Error("Failed to save changes");
         }
         setLastSaved(new Date());
-      } catch (err) {
-        console.error("Failed to save:", err);
+      } catch {
         setError("Failed to save. Please try again.");
       } finally {
         setIsSaving(false);

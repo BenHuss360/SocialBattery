@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Battery } from "@/components/Battery";
 
@@ -11,8 +11,9 @@ export default function OnboardingPage() {
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Debounced username availability check
+  // Debounced username availability check with request cancellation
   useEffect(() => {
     if (username.length < 3) {
       setIsAvailable(null);
@@ -20,21 +21,40 @@ export default function OnboardingPage() {
     }
 
     const timer = setTimeout(async () => {
+      // Cancel any in-flight request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new abort controller for this request
+      abortControllerRef.current = new AbortController();
+
       setIsChecking(true);
       try {
         const res = await fetch(
-          `/api/username/check?username=${encodeURIComponent(username)}`
+          `/api/username/check?username=${encodeURIComponent(username)}`,
+          { signal: abortControllerRef.current.signal }
         );
         const data = await res.json();
         setIsAvailable(data.available);
-      } catch {
+      } catch (err) {
+        // Ignore abort errors, handle other errors
+        if (err instanceof Error && err.name === "AbortError") {
+          return;
+        }
         setIsAvailable(null);
       } finally {
         setIsChecking(false);
       }
     }, 500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      // Cancel request on cleanup
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [username]);
 
   const handleSubmit = async (e: React.FormEvent) => {

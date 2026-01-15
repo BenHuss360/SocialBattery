@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Battery } from "@/components/Battery";
 import { signIn } from "next-auth/react";
 import { STATUS_PRESETS } from "@/lib/constants";
@@ -16,6 +17,7 @@ const DEMO_PRESETS = [
 ];
 
 export default function HomePage() {
+  const router = useRouter();
   const [demoLevel, setDemoLevel] = useState(3);
   const [demoStatus, setDemoStatus] = useState<string | null>(null);
   const [email, setEmail] = useState("");
@@ -53,7 +55,7 @@ export default function HomePage() {
         throw new Error(result.error);
       }
 
-      window.location.href = `/check-email?email=${encodeURIComponent(email)}`;
+      router.push(`/check-email?email=${encodeURIComponent(email)}`);
     } catch {
       setError("Failed to send magic link. Please try again.");
       setIsLoading(false);

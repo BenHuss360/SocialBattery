@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Battery } from "@/components/Battery";
 
 function CheckEmailContent() {
@@ -22,14 +23,14 @@ function CheckEmailContent() {
       <div className="p-4 bg-card rounded-lg border border-border">
         <p className="text-sm text-muted">
           Didn&apos;t receive an email? Check your spam folder or{" "}
-          <a
+          <Link
             href={
               email ? `/login?email=${encodeURIComponent(email)}` : "/login"
             }
             className="text-accent hover:underline"
           >
             try again
-          </a>
+          </Link>
           .
         </p>
       </div>
