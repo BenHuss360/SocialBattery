@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const securityHeaders = [
   {
@@ -35,7 +36,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'", // Required for inline styles
       "img-src 'self' data: blob:",
       "font-src 'self'",
-      "connect-src 'self'",
+      "connect-src 'self' https://*.ingest.sentry.io", // Allow Sentry
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -55,4 +56,20 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Sentry organization and project
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+
+  // Only print logs when uploading source maps
+  silent: !process.env.SENTRY_AUTH_TOKEN,
+
+  // Upload source maps for better stack traces
+  widenClientFileUpload: true,
+
+  // Tree shake Sentry SDK for smaller bundle
+  disableLogger: true,
+
+  // Automatically instrument API routes
+  automaticVercelMonitors: true,
+});

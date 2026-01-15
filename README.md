@@ -31,6 +31,7 @@ A web app that lets users set and share their "social battery" level - a visual 
 - **Input Validation** - All user inputs validated and sanitized
 - **Visibility Enforcement** - Unlisted profiles hidden from OG/sticker generation
 - **Parameterized Queries** - Drizzle ORM prevents SQL injection
+- **Error Tracking** - Sentry integration for production error monitoring
 
 ## SEO & Performance
 
@@ -157,6 +158,16 @@ Vercel automatically injects `KV_REST_API_URL` and `KV_REST_API_TOKEN` environme
 
 **Note:** Without Vercel KV, the app falls back to in-memory rate limiting (fine for local development, but rate limits won't work correctly across serverless instances in production).
 
+### Set Up Sentry (Error Tracking)
+
+1. Create a free account at [sentry.io](https://sentry.io)
+2. Create a new Next.js project
+3. Copy your DSN from Project Settings → Client Keys
+4. Add `NEXT_PUBLIC_SENTRY_DSN` to Vercel environment variables
+
+Optional (for source maps):
+- Add `SENTRY_ORG`, `SENTRY_PROJECT`, and `SENTRY_AUTH_TOKEN` for better stack traces
+
 ### Environment Variables
 
 Set these in the Vercel dashboard:
@@ -168,6 +179,10 @@ Set these in the Vercel dashboard:
 | `AUTH_RESEND_KEY` | Resend API key |
 | `KV_REST_API_URL` | Auto-injected by Vercel KV |
 | `KV_REST_API_TOKEN` | Auto-injected by Vercel KV |
+| `NEXT_PUBLIC_SENTRY_DSN` | Sentry DSN for error tracking |
+| `SENTRY_ORG` | (Optional) Sentry organization slug |
+| `SENTRY_PROJECT` | (Optional) Sentry project slug |
+| `SENTRY_AUTH_TOKEN` | (Optional) Sentry auth token for source maps |
 
 ## License
 
