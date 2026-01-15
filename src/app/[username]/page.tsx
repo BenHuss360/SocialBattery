@@ -22,15 +22,20 @@ async function getUser(username: string) {
 
 // Pre-generate static pages for recent users (ISR will handle the rest)
 export async function generateStaticParams() {
-  const recentUsers = await db.query.users.findMany({
-    orderBy: [desc(users.updatedAt)],
-    limit: 100,
-    columns: { username: true },
-  });
+  try {
+    const recentUsers = await db.query.users.findMany({
+      orderBy: [desc(users.updatedAt)],
+      limit: 100,
+      columns: { username: true },
+    });
 
-  return recentUsers
-    .filter((user) => user.username)
-    .map((user) => ({ username: user.username! }));
+    return recentUsers
+      .filter((user) => user.username)
+      .map((user) => ({ username: user.username! }));
+  } catch {
+    // Return empty array if database is unavailable (e.g., in CI)
+    return [];
+  }
 }
 
 export async function generateMetadata({

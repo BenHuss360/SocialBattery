@@ -18,21 +18,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // Get public user profiles (exclude unlisted)
-  const publicUsers = await db.query.users.findMany({
-    where: eq(users.visibility, "public"),
-    orderBy: [desc(users.updatedAt)],
-    limit: 1000,
-    columns: { username: true, updatedAt: true },
-  });
+  try {
+    const publicUsers = await db.query.users.findMany({
+      where: eq(users.visibility, "public"),
+      orderBy: [desc(users.updatedAt)],
+      limit: 1000,
+      columns: { username: true, updatedAt: true },
+    });
 
-  const userPages: MetadataRoute.Sitemap = publicUsers
-    .filter((user) => user.username)
-    .map((user) => ({
-      url: `${baseUrl}/${user.username}`,
-      lastModified: user.updatedAt,
-      changeFrequency: "daily" as const,
-      priority: 0.8,
-    }));
+    const userPages: MetadataRoute.Sitemap = publicUsers
+      .filter((user) => user.username)
+      .map((user) => ({
+        url: `${baseUrl}/${user.username}`,
+        lastModified: user.updatedAt,
+        changeFrequency: "daily" as const,
+        priority: 0.8,
+      }));
 
-  return [...staticPages, ...userPages];
+    return [...staticPages, ...userPages];
+  } catch {
+    // Return only static pages if database is unavailable (e.g., in CI)
+    return staticPages;
+  }
 }
